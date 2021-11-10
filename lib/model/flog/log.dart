@@ -14,6 +14,13 @@ class Log {
   int? timeInMillis;
   LogLevel? logLevel;
   String? stacktrace;
+  String? latitude;
+  String? longitude;
+  String? brand;
+  String? model;
+  String? os;
+  String? version;
+  String? buildVersion;
 
   Log({
     this.className,
@@ -25,6 +32,13 @@ class Log {
     this.logLevel,
     this.dataLogType,
     this.stacktrace,
+    this.latitude,
+    this.longitude,
+    this.brand,
+    this.model,
+    this.os,
+    this.version,
+    this.buildVersion
   });
 
   /// Converts class to json
@@ -39,6 +53,13 @@ class Log {
       'dataLogType': dataLogType,
       'logLevel': LogLevelConverter.fromEnumToString(logLevel),
       'stacktrace': stacktrace,
+      'latitude': latitude,
+      'longitude': longitude,
+      'brand': brand,
+      'model': model,
+      'os': os,
+      'version': version,
+      'buildVersion': buildVersion
     };
   }
 
@@ -54,6 +75,13 @@ class Log {
       dataLogType: json['dataLogType'],
       logLevel: LogLevelConverter.fromStringToEnum(json['logLevel']),
       stacktrace: json['stacktrace'],
+      latitude: json['latitude'],
+      longitude: json['longitude'],
+      brand: json['brand'],
+      model: json['model'],
+      os: json['os'],
+      version: json['version'],
+      buildVersion: json['buildVersion']
     );
   }
 }

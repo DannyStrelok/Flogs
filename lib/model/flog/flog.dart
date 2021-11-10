@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:f_logs/f_logs.dart';
@@ -264,6 +265,26 @@ class FLog {
     logs.forEach((log) {
       buffer.write(Formatter.format(log, _config));
     });
+
+    // writing logs to file and returning file object
+    final file = await _storage.writeLogsToFile(buffer.toString());
+    print(buffer.toString());
+    buffer.clear();
+    return file;
+  }
+
+  /// exportLogsJSON
+  ///
+  /// This will export logs to external storage under FLog directory in a JSON file
+  static Future<File> exportLogsJSON() async {
+    var buffer = StringBuffer();
+
+    print(Constants.PRINT_EXPORT_MSG);
+
+    //get all logs and write to file
+    final logs = await _getAllLogs();
+
+    buffer.write(jsonEncode(logs));
 
     // writing logs to file and returning file object
     final file = await _storage.writeLogsToFile(buffer.toString());
