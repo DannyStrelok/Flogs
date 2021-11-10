@@ -473,7 +473,7 @@ class FLog {
       if (Platform.isAndroid) {
         AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
         osName = 'android';
-        osVersionName = androidInfo.version.toString();
+        osVersionName = androidInfo.version.sdkInt.toString();
         brandName = androidInfo.brand;
         modelName = androidInfo.model;
 
