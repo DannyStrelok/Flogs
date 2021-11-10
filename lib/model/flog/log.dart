@@ -21,8 +21,10 @@ class Log {
   String? os;
   String? version;
   String? buildVersion;
+  String? appName;
 
   Log({
+    this.id,
     this.className,
     this.methodName,
     this.text,
@@ -38,12 +40,14 @@ class Log {
     this.model,
     this.os,
     this.version,
-    this.buildVersion
+    this.buildVersion,
+    this.appName
   });
 
   /// Converts class to json
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'className': className,
       'methodName': methodName,
       'text': text,
@@ -59,13 +63,15 @@ class Log {
       'model': model,
       'os': os,
       'version': version,
-      'buildVersion': buildVersion
+      'buildVersion': buildVersion,
+      'appName': appName
     };
   }
 
   /// create `Log` from json
   static Log fromJson(Map<String, dynamic> json) {
     return Log(
+      id: json['id'],
       className: json['className'],
       methodName: json['methodName'],
       text: json['text'],
@@ -81,7 +87,8 @@ class Log {
       model: json['model'],
       os: json['os'],
       version: json['version'],
-      buildVersion: json['buildVersion']
+      buildVersion: json['buildVersion'],
+      appName: json['appName']
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:f_logs/f_logs.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sembast/sembast.dart';
 import 'package:stack_trace/stack_trace.dart';
 
@@ -37,11 +39,13 @@ class FLog {
     dynamic exception,
     String? dataLogType,
     StackTrace? stacktrace,
+    String? latitude,
+    String? longitude
   }) async {
     // prevent to write LogLevel.ALL and LogLevel.OFF to db
     if (![LogLevel.OFF, LogLevel.ALL].contains(type)) {
       _logThis(className, methodName, text, type, exception, dataLogType,
-          stacktrace);
+          stacktrace, latitude, longitude);
     }
   }
 
@@ -60,9 +64,11 @@ class FLog {
     dynamic exception,
     String? dataLogType,
     StackTrace? stacktrace,
+    String? latitude,
+    String? longitude
   }) async {
     _logThis(className, methodName, text, LogLevel.TRACE, exception,
-        dataLogType, stacktrace);
+        dataLogType, stacktrace, latitude, longitude);
   }
 
   /// debug
@@ -80,9 +86,11 @@ class FLog {
     dynamic exception,
     String? dataLogType,
     StackTrace? stacktrace,
+    String? latitude,
+    String? longitude
   }) async {
     _logThis(className, methodName, text, LogLevel.DEBUG, exception,
-        dataLogType, stacktrace);
+        dataLogType, stacktrace, latitude, longitude);
   }
 
   /// info
@@ -100,9 +108,11 @@ class FLog {
     dynamic exception,
     String? dataLogType,
     StackTrace? stacktrace,
+    String? latitude,
+    String? longitude
   }) async {
     _logThis(className, methodName, text, LogLevel.INFO, exception, dataLogType,
-        stacktrace);
+        stacktrace, latitude, longitude);
   }
 
   /// warning
@@ -120,9 +130,11 @@ class FLog {
     dynamic exception,
     String? dataLogType,
     StackTrace? stacktrace,
+    String? latitude,
+    String? longitude
   }) async {
     _logThis(className, methodName, text, LogLevel.WARNING, exception,
-        dataLogType, stacktrace);
+        dataLogType, stacktrace, latitude, longitude);
   }
 
   /// error
@@ -140,9 +152,11 @@ class FLog {
     dynamic exception,
     String? dataLogType,
     StackTrace? stacktrace,
+    String? latitude,
+    String? longitude
   }) async {
     _logThis(className, methodName, text, LogLevel.ERROR, exception,
-        dataLogType, stacktrace);
+        dataLogType, stacktrace, latitude, longitude);
   }
 
   /// severe
@@ -160,9 +174,11 @@ class FLog {
     dynamic exception,
     String? dataLogType,
     StackTrace? stacktrace,
+    String? latitude,
+    String? longitude
   }) async {
     _logThis(className, methodName, text, LogLevel.SEVERE, exception,
-        dataLogType, stacktrace);
+        dataLogType, stacktrace, latitude, longitude);
   }
 
   /// fatal
@@ -180,9 +196,11 @@ class FLog {
     dynamic exception,
     String? dataLogType,
     StackTrace? stacktrace,
+    String? latitude,
+    String? longitude
   }) async {
     _logThis(className, methodName, text, LogLevel.FATAL, exception,
-        dataLogType, stacktrace);
+        dataLogType, stacktrace, latitude, longitude );
   }
 
   /// printLogs
@@ -386,7 +404,6 @@ class FLog {
   ///
   /// Returns the default configuration
   static LogsConfig getDefaultConfigurations() {
-    assert(_config != null);
     return _config;
   }
 
@@ -407,10 +424,9 @@ class FLog {
       LogLevel type,
       dynamic exception,
       String? dataLogType,
-      StackTrace? stacktrace) {
-    assert(text != null);
-    assert(type != null);
-
+      StackTrace? stacktrace,
+      String? latitude,
+      String? longitude) async {
     // This variable can be ClassName.MethodName or only a function name, when it doesn't belong to a class, e.g. main()
     var member = Trace.current().frames[2].member!;
 
@@ -418,7 +434,7 @@ class FLog {
     //then its already been taken from calling class
     if (className == null) {
       // If there is a . in the member name, it means the method belongs to a class. Thus we can split it.
-      if(member.contains(".")) {
+      if (member.contains(".")) {
         className = member.split(".")[0];
       } else {
         className = "";
@@ -429,7 +445,7 @@ class FLog {
     //then its already been taken from calling class
     if (methodName == null) {
       // If there is a . in the member name, it means the method belongs to a class. Thus we can split it.
-      if(member.contains(".")) {
+      if (member.contains(".")) {
         methodName = member.split(".")[1];
       } else {
         methodName = member;
@@ -438,25 +454,65 @@ class FLog {
 
     // Generate a custom formatted stack trace
     String? formattedStackTrace;
-    if(_config.stackTraceFormatter != null) {
-      formattedStackTrace = _config.stackTraceFormatter!(stacktrace ??  StackTrace.current);
+    if (_config.stackTraceFormatter != null) {
+      formattedStackTrace =
+          _config.stackTraceFormatter!(stacktrace ?? StackTrace.current);
     }
 
     //check to see if user provides a valid configuration and logs are enabled
     //if not then don't do anything
     if (_isLogsConfigValid()) {
+      PackageInfo packageInfo = await PackageInfo.fromPlatform();
+      DeviceInfoPlugin deviceInfo = DeviceInfoPlugin();
+
+      String? osName;
+      String? osVersionName;
+      String? modelName;
+      String? brandName;
+
+      if (Platform.isAndroid) {
+        AndroidDeviceInfo androidInfo = await deviceInfo.androidInfo;
+        osName = 'android';
+        osVersionName = androidInfo.version.toString();
+        brandName = androidInfo.brand;
+        modelName = androidInfo.model;
+
+      } else if (Platform.isIOS) {
+        IosDeviceInfo  iosInfo  = await deviceInfo.iosInfo;
+        osName = 'ios';
+        osVersionName = iosInfo.systemVersion;
+        brandName = 'apple';
+        modelName = iosInfo.model;
+
+      } else if (Platform.isWindows) {
+        osName = 'windows';
+      } else if (Platform.isFuchsia) {
+        osName = 'fuchsia';
+      } else if (Platform.isLinux) {
+        osName = 'linux';
+      } else if (Platform.isMacOS) {
+        osName = 'macos';
+      }
+
       //creating log object
       final log = Log(
-        className: className,
-        methodName: methodName,
-        text: text,
-        logLevel: type,
-        dataLogType: dataLogType,
-        exception: exception.toString(),
-        timestamp: DateTimeUtils.getCurrentTimestamp(_config),
-        timeInMillis: DateTimeUtils.getCurrentTimeInMillis(),
-        stacktrace: formattedStackTrace ?? stacktrace.toString(),
-      );
+          className: className,
+          methodName: methodName,
+          text: text,
+          logLevel: type,
+          dataLogType: dataLogType,
+          exception: exception.toString(),
+          timestamp: DateTimeUtils.getCurrentTimestamp(_config),
+          timeInMillis: DateTimeUtils.getCurrentTimeInMillis(),
+          stacktrace: formattedStackTrace ?? stacktrace.toString(),
+          latitude: latitude,
+          longitude: longitude,
+          appName: packageInfo.appName,
+          buildVersion: packageInfo.buildNumber,
+          os: osName,
+          version: osVersionName,
+          model: modelName,
+          brand: brandName);
 
       //writing it to DB
       _writeLogs(log);
@@ -481,7 +537,8 @@ class FLog {
   /// _getAllSortedByFilter
   ///
   /// This will return the list of logs sorted by provided filters
-  static Future<List<Log>> _getAllSortedByFilter({List<Filter>? filters}) async {
+  static Future<List<Log>> _getAllSortedByFilter(
+      {List<Filter>? filters}) async {
     //check to see if user provides a valid configuration and logs are enabled
     //if not then don't do anything
     if (_isLogsConfigValid()) {
@@ -524,6 +581,6 @@ class FLog {
   /// This will check if user provided any configuration and logs are enabled
   /// if yes, then it will return true else it will return false
   static _isLogsConfigValid() {
-    return _config != null && _config.isLogsEnabled;
+    return _config.isLogsEnabled;
   }
 }
